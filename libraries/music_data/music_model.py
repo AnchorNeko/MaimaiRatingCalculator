@@ -45,16 +45,14 @@ class MaiMusicModel:
         """
         获取所有曲目数据
         """
-        # try:
-        #     async with aiohttp.request('GET', 'https://dp4p6x0xfi5o9.cloudfront.net/maimai/data.json', timeout=aiohttp.ClientTimeout(total=30)) as obj_data:
-        #         if obj_data.status == 200:
-        #             data = await obj_data.json()
-        #             async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'remote_music_data.json'), 'w', encoding='utf-8') as f:
-        #                 await f.write(json.dumps(data, ensure_ascii=False, indent=4))
-        # except Exception:
-        #     async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'music_data.json'), 'r', encoding='utf-8') as f:
-        #         data = json.loads(await f.read())
-        async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'remote_music_data.json'), 'r', encoding='utf-8') as f:
+        try:
+            async with aiohttp.request('GET', 'https://dp4p6x0xfi5o9.cloudfront.net/maimai/data.json', timeout=aiohttp.ClientTimeout(total=30)) as obj_data:
+                if obj_data.status == 200:
+                    data = await obj_data.json()
+                    async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'remote_music_data.json'), 'w', encoding='utf-8') as f:
+                        await f.write(json.dumps(data, ensure_ascii=False, indent=4))
+        except Exception:
+            async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'music_data.json'), 'r', encoding='utf-8') as f:
                 data = json.loads(await f.read())
         self.total_list = [Song.gene(song_data) for song_data in data['songs']]
         return self.total_list
