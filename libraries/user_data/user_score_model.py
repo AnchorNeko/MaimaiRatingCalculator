@@ -67,7 +67,7 @@ class user_score_list:
     def get_user_score_list(self, pathList: list[str]) -> list[song_score]:
         score_list = []
         for path in pathList:
-            soup = BeautifulSoup(open(path))
+            soup = BeautifulSoup(open(path), features="html.parser")
             if soup.body is None:
                 continue
             original_html_data = soup.body.find(attrs={"class" : "wrapper main_wrapper t_c o_v"}).find_all(attrs={"class" : "w_450 m_15 p_r f_0"})
