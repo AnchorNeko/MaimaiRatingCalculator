@@ -41,20 +41,30 @@ class MaiMusicModel:
     def __init__(self) -> None:
         pass
 
-    async def get_music(self) -> list[Song]:
-        """
-        获取所有曲目数据
-        """
-        try:
-            async with aiohttp.request('GET', 'https://dp4p6x0xfi5o9.cloudfront.net/maimai/data.json', timeout=aiohttp.ClientTimeout(total=30)) as obj_data:
-                if obj_data.status == 200:
-                    data = await obj_data.json()
-                    async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'remote_music_data.json'), 'w', encoding='utf-8') as f:
-                        await f.write(json.dumps(data, ensure_ascii=False, indent=4))
-        except Exception:
-            async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'music_data.json'), 'r', encoding='utf-8') as f:
+    async def get_music(self, updateLocal: bool = False) -> list[Song]:
+        print("""
+        ==========开始获取远端数据==========
+        """)
+        data = None
+        if updateLocal == False and os.path.exists(file := os.path.join(os.path.dirname(__file__), 'remote_music_data.json')):
+            async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'remote_music_data.json'), 'r', encoding='utf-8') as f:
                 data = json.loads(await f.read())
+        
+        if data == None:
+            try:
+                async with aiohttp.request('GET', 'https://dp4p6x0xfi5o9.cloudfront.net/maimai/data.json', timeout=aiohttp.ClientTimeout(total=30)) as obj_data:
+                    if obj_data.status == 200:
+                        data = await obj_data.json()
+                        async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'remote_music_data.json'), 'w', encoding='utf-8') as f:
+                            await f.write(json.dumps(data, ensure_ascii=False, indent=4))
+            except Exception:
+                pass
         self.total_list = [Song.gene(song_data) for song_data in data['songs']]
+        self.newest_version = data['versions'][-1]['version']
+        self.diff_list = data['difficulties']
+        print("""
+        ==========远端数据获取完毕==========
+        """)
         return self.total_list
 
     def find_music(self, music_name:str) -> Song:
@@ -62,5 +72,11 @@ class MaiMusicModel:
             if song.song_id == music_name:
                 return song
         return None
+    
+    def get_newest_version(self) -> str:
+        return self.newest_version
+    
+    def get_diff_name(self, diff:int) -> str:
+        return self.diff_list[diff]["name"]
 
 MaiMusicDB = MaiMusicModel()
