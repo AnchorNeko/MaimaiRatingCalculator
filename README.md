@@ -15,6 +15,6 @@ Best50图片生成代码部份 参考于该项目 https://github.com/Yuri-YuzuCh
 2. 填写 config.json 中的 friend_code，值为待查询帐号的好友id  
 3. 填写 config.json 中的 user_name（帐号）和password（密码），帐号为查分用帐号  
 4. 若需要更新本地缓存歌曲信息，将 config.json 中的 update_local 设置为 ture  
-5. 执行目录中的 __init__.py 文件，可能会有报错显示缺少部份组件（xxx），在终端处执行 pip/pip3 install xxx 即可  
+5. 执行目录中的 `__init__`.py 文件，可能会有报错显示缺少部份组件（xxx），在终端处执行 pip/pip3 install xxx 即可  
   
 关注嘉然谢谢喵～  
