@@ -1,8 +1,11 @@
 from typing import Optional
-import aiohttp
-import aiofiles
 import os
 import json
+
+try:
+    import aiohttp
+except ModuleNotFoundError:
+    aiohttp = None
 
 # 创建 Sheets 类
 class Sheet:
@@ -47,20 +50,24 @@ class MaiMusicModel:
         """)
         data = None
         if updateLocal == False and os.path.exists(file := os.path.join(os.path.dirname(__file__), 'remote_music_data.json')):
-            async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'remote_music_data.json'), 'r', encoding='utf-8') as f:
-                data = json.loads(await f.read())
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
         
         if data == None:
+            if aiohttp is None:
+                raise ModuleNotFoundError("缺少 aiohttp，无法在线更新歌曲数据。请先安装 aiohttp，或将 update_local 设为 false 并使用本地 remote_music_data.json。")
             try:
                 async with aiohttp.request('GET', 'https://dp4p6x0xfi5o9.cloudfront.net/maimai/data.json', timeout=aiohttp.ClientTimeout(total=30)) as obj_data:
                     if obj_data.status == 200:
                         data = await obj_data.json()
-                        async with aiofiles.open(os.path.join(os.path.dirname(__file__), 'remote_music_data.json'), 'w', encoding='utf-8') as f:
-                            await f.write(json.dumps(data, ensure_ascii=False, indent=4))
+                        with open(os.path.join(os.path.dirname(__file__), 'remote_music_data.json'), 'w', encoding='utf-8') as f:
+                            json.dump(data, f, ensure_ascii=False, indent=4)
             except Exception:
                 pass
+        if data is None:
+            raise RuntimeError("歌曲数据加载失败：未读取到本地缓存，且在线拉取失败。请检查网络，或确认 remote_music_data.json 存在。")
         self.total_list = [Song.gene(song_data) for song_data in data['songs']]
-        self.newest_version = data['versions'][-1]['version']
+        self.newest_version = [data['versions'][-1]['version'], data['versions'][-2]['version']]
         self.diff_list = data['difficulties']
         print("""
         ==========远端数据获取完毕==========
@@ -71,9 +78,10 @@ class MaiMusicModel:
         for song in self.total_list:
             if song.song_id == music_name:
                 return song
+        print("未找到对应歌曲：", music_name)
         return None
     
-    def get_newest_version(self) -> str:
+    def get_newest_version(self) -> list[str]:
         return self.newest_version
     
     def get_diff_name(self, diff:int) -> str:

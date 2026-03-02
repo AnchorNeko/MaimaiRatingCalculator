@@ -1,0 +1,6 @@
+{
+    "user_name": "your_query_account",
+    "password": "your_query_password",
+    "friend_code": "target_friend_code",
+    "update_local": false
+}

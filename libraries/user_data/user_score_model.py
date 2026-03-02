@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from ..music_data.music_model import MaiMusicDB
 from ..music_data.music_model import Song
 
-def computeRa(ds: float, score: float) -> int:
+def computeRa(ds: float, score: float, isAp:bool) -> int:
     if score == None:
         score = 0
     if score < 50:
@@ -63,7 +63,7 @@ class song_score:
         for sheet in self.song_data.sheets:
             if sheet.type == self.song_kind and sheet.difficulty == song_difficulty:
                 self.internalLevelValue = sheet.internal_level_value
-                self.rating =  computeRa(sheet.internal_level_value, self.user_score)
+                self.rating =  computeRa(sheet.internal_level_value, self.user_score, ["AP", 'APP'] in self.tag_list)
         
 class user_score_list:
     def __init__(self) -> None:
@@ -148,12 +148,19 @@ class user_score_list:
 
                 song_difficulty = str(song_original_data.find(attrs={"class" : "h_20 f_l"})["src"]).split("diff_")[1].split(".png")[0]
                 original_song_data = MaiMusicDB.find_music(song_name)
-                score_list.append(song_score(song_name = song_name, 
-                                    user_score = user_score, 
-                                    song_kind = song_kind, 
-                                    song_difficulty = song_difficulty, 
+                if original_song_data is None:
+                    print(f"警告：曲库中缺少歌曲，已跳过：{song_name}")
+                    continue
+                current_score = song_score(song_name = song_name,
+                                    user_score = user_score,
+                                    song_kind = song_kind,
+                                    song_difficulty = song_difficulty,
                                     song_data = original_song_data,
-                                    tag_list = song_tag_list))
+                                    tag_list = song_tag_list)
+                if not hasattr(current_score, "rating"):
+                    print(f"警告：谱面匹配失败，已跳过：{song_name} ({song_kind}/{song_difficulty})")
+                    continue
+                score_list.append(current_score)
             print(f"""
             ==========难度{MaiMusicDB.get_diff_name(diff)}歌曲数据处理完毕==========
              """)
@@ -164,7 +171,7 @@ class user_score_list:
         b35_list = []
         b15_list = []
         for song_score in self.total_song_score:
-            if song_score.version == MaiMusicDB.get_newest_version():
+            if song_score.version in MaiMusicDB.get_newest_version():
                 b15_list.append(song_score)
             else :
                 b35_list.append(song_score)
